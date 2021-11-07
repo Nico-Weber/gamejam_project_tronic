@@ -9,7 +9,7 @@
   1. playercharacter class X
   2. minimal movement
     2.1 input binding to movement X
-    2.2 gravity *
+    2.2 gravity X
     2.3 collision *
       2.3.1 down *
       2.3.1 up
@@ -37,43 +37,58 @@
 --IMPORTANT
 -- 8px = 1x1 spriteblock unit
 
+--CONSTANTS
+local PLAYER1_SPRITE = {0,16}
+local TEXT_COLOR = 0
+local GRAVITY = 9.81
 --GLOBAL VARIABLES
-local PLAYER1_SPRITE = {16,32}
-local TEXT_COLOR = 14;
 local CameraFocus = NewPoint(x,y)
 
 --CLASSES
 Pawn = {} --Pawn class defined
 
-function lerp(pos1, pos2, perc)
-    return (1-perc)*pos1 + perc*pos2
+function Pawn:new(name,x,y) --creating an instance of class Pawn
+    self.name = name
+    self.pos = NewPoint(x,y)
+    self.speed = 10
+    self.flagID = -1
+    self.collisionUp = NewPoint(x,y)
+    self.collisionLeft = NewPoint(x,y)
+    self.collisionRight = NewPoint(x,y)
+    self.collisionDown = NewPoint(x,y)
+ return self
 end
 
-function Pawn:new(name,x,y) --creating an instance of class Pawn
-  local newObject = {
-    name = name,
-    pos = NewPoint(x,y),
-    speed = 10,
-    flagID = -1
- }
-  self.__index = self
-  return setmetatable(newObject, self)
-end
+--function Pawn:update(x,y)
+  --collisionUp = NewPoint(x,y),
+  --collisionLeft = NewPoint(x,y),
+  --collisionRight = NewPoint(x,y),
+  --self.collisionDown.x = x
+  --self.collisionDown.y = y
+  --DrawText("collisionDown:" .. collisionDown,1*8,3*8,DrawMode.Sprite,"large",TEXT_COLOR)
+--end
 
 function Pawn:printPos() -- print position (x|y) of pawn
   DrawText(self.name .. ":" .. tostring(self.pos),1*8,1*8,DrawMode.Sprite,"large",TEXT_COLOR)
 end
 
 
+function lerp(pos1, pos2, perc)
+  return (1-perc)*pos1 + perc*pos2
+end
+
+
 function Init()
-  BackgroundColor(3)
+  BackgroundColor(13)
   player1 = Pawn:new("Player_1",50,50)
-  player1.speed = 1
+  player1.speed = 2
+  jumpBegin = os.time()
 end
 
 
 function Update(timeDelta)
 --PLAYER 1:
+  --player1.update(player1.pos.x,player1.pos.y)
   --CONTROLS
   if(Button(Buttons.Right, InputState.Down, 0)) then
     player1.pos.x += player1.speed
@@ -84,20 +99,18 @@ function Update(timeDelta)
   if(Button(Buttons.Up, InputState.Down, 0)) then
     player1.pos.y -= player1.speed
   end
-  if(Button(Buttons.Down, InputState.Down, 0)) then
-    player1.pos.y += player1.speed
-  end
   if(Button(Buttons.A, InputState.Down, 0)) then
-    --DEBUG
   end
   --GRAVITY
-  player1.pos.y = Repeat(player1.pos.y + 1,Display().y)
+  nextMove = player1.pos.y + GRAVITY * (os.time()-jumpBegin) --next position to move in (x|y)
+  player1.pos.y  = Repeat(nextMove, Display().y) --actual gravity part applied on pos
   --COLLISION
-  player1.flagID = Flag(player1.pos.x/8, player1.pos.y/8)
+  player1.flagID = Flag(player1.pos.x/8, player1.pos.y/8) --checks Flag for down
   DrawText("Collision: " .. player1.flagID,1*8,2*8,DrawMode.Sprite,"large",TEXT_COLOR)
-  if(player1.flagID == 0) then
-    --TODO add penetration resolution
-    DrawText("Colliding!",1*8,3*8,DrawMode.Sprite,"large",TEXT_COLOR)
+  if player1.flagID == 0 then
+    player1.pos.y -= 1;
+    jumpBegin = os.time()
+
   end
   --CAMERA-SCROLLING
   CameraFocus.x = lerp(CameraFocus.x,player1.pos.x-Display().x/2,0.04)
@@ -110,7 +123,6 @@ end
 
 function Draw()
   RedrawDisplay()
-
-  DrawSprites(PLAYER1_SPRITE, player1.pos.x-4, player1.pos.y-16, 1)
+  DrawSprites(PLAYER1_SPRITE, player1.pos.x-3, player1.pos.y-15, 1)
 
 end
