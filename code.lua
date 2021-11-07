@@ -1,6 +1,5 @@
 --Copyright (C) 2021 Nico Weber
 
-
 --[[
   X = done
   * = currently working at
@@ -83,6 +82,7 @@ function Init()
   player1 = Pawn:new("Player_1",50,50)
   player1.speed = 2
   jumpBegin = os.time()
+  fallspeedLimitation = os.time()-jumpBegin
 end
 
 
@@ -102,8 +102,11 @@ function Update(timeDelta)
   if(Button(Buttons.A, InputState.Down, 0)) then
   end
   --GRAVITY
-  nextMove = player1.pos.y + GRAVITY * (os.time()-jumpBegin) --next position to move in (x|y)
-  player1.pos.y  = Repeat(nextMove, Display().y) --actual gravity part applied on pos
+  if(os.time()-jumpBegin<= 2) then
+    fallspeedLimitation = os.time()-jumpBegin;
+  end
+  nextMove = player1.pos.y + GRAVITY * fallspeedLimitation --next position to move in (x|y)
+  player1.pos.y  = Repeat(nextMove, Display().y) --actual gravity part applied on pos and limited to repeat within levels y-boundaries
   --COLLISION
   player1.flagID = Flag(player1.pos.x/8, player1.pos.y/8) --checks Flag for down
   DrawText("Collision: " .. player1.flagID,1*8,2*8,DrawMode.Sprite,"large",TEXT_COLOR)
