@@ -9,11 +9,11 @@
   2. minimal movement
     2.1 input binding to movement X
     2.2 gravity X
-    2.3 collision *
-      2.3.1 down *
-      2.3.1 up
-      2.3.1 left
-      2.3.1 right
+    2.3 collision X
+      2.3.1 down X
+      2.3.1 up X
+      2.3.1 left X
+      2.3.1 right X
     2.4 jumping
   3. camera control X
     3.1 easing interpolation X
@@ -49,8 +49,9 @@ Pawn = {} --Pawn class defined
 function Pawn:new(name,x,y) --creating an instance of class Pawn
     self.name = name
     self.pos = NewPoint(x,y)
+    --watch out for unexpected behaviour when using floats with speed (usually integers do the job)
     self.speed = 2
-    self.jumpSpeed = 4
+    self.jumpSpeed = 2
     self.flagID = -1
     self.collisionUp = NewPoint(x,y)
     self.collisionLeft = NewPoint(x,y)
@@ -58,15 +59,6 @@ function Pawn:new(name,x,y) --creating an instance of class Pawn
     self.collisionDown = NewPoint(x,y)
  return self
 end
-
---function Pawn:update(x,y)
-  --collisionUp = NewPoint(x,y),
-  --collisionLeft = NewPoint(x,y),
-  --collisionRight = NewPoint(x,y),
-  --self.collisionDown.x = x
-  --self.collisionDown.y = y
-  --DrawText("collisionDown:" .. collisionDown,1*8,3*8,DrawMode.Sprite,"large",TEXT_COLOR)
---end
 
 function Pawn:printPos() -- print position (x|y) of pawn
   DrawText(self.name .. ":" .. tostring(self.pos),1*8,1*8,DrawMode.Sprite,"large",TEXT_COLOR)
@@ -88,35 +80,54 @@ end
 
 function Update(timeDelta)
 --PLAYER 1:
-  --player1.update(player1.pos.x,player1.pos.y)
   --CONTROLS
-  if(Button(Buttons.Right, InputState.Down, 0)) then
+  if Button(Buttons.Right, InputState.Down, 0) then
     player1.pos.x += player1.speed
   end
-  if(Button(Buttons.Left, InputState.Down, 0)) then
+  if Button(Buttons.Left, InputState.Down, 0) then
     player1.pos.x -= player1.speed
   end
-  if(Button(Buttons.A, InputState.Down, 0)) then
+  if Button(Buttons.Up, InputState.Down, 0) then
     player1.pos.y -= player1.jumpSpeed
   end
+  if Button(Buttons.A, InputState.Down, 0) then
+    player1.pos.y -= player1.jumpSpeed
+  end
+
   --GRAVITY
   if(os.time()-jumpBegin<= 2) then
     fallspeedLimitation = os.time()-jumpBegin;
   end
   nextMove = player1.pos.y + GRAVITY * fallspeedLimitation --next position to move in (x|y)
   player1.pos.y  = Repeat(nextMove, Display().y) --actual gravity part applied on pos and limited to repeat within levels y-boundaries
+
   --COLLISION
-  player1.flagID = Flag(player1.pos.x/8, player1.pos.y/8) --checks Flag for down
-  DrawText("Collision: " .. player1.flagID,1*8,2*8,DrawMode.Sprite,"large",TEXT_COLOR)
+  --TODO Collision variables to dynamically change collision positions if needed
+
+  --up collision
+  player1.flagID = Flag((player1.pos.x)/8, (player1.pos.y-11)/8)
+  if player1.flagID == 0 then player1.pos.y += 1 end
+
+  --left collision
+  player1.flagID = Flag((player1.pos.x-2)/8, (player1.pos.y-2)/8)
+  if player1.flagID == 0 then player1.pos.x += player1.speed end
+
+  --right collision
+  player1.flagID = Flag((player1.pos.x+2)/8, (player1.pos.y-2)/8)
+  if player1.flagID == 0 then player1.pos.x -= player1.speed end
+
+  --down collision
+  player1.flagID = Flag(player1.pos.x/8, player1.pos.y/8)
   if player1.flagID == 0 then
     player1.pos.y -= 1;
     jumpBegin = os.time()
-
   end
+
   --CAMERA-SCROLLING
   CameraFocus.x = lerp(CameraFocus.x,player1.pos.x-Display().x/2,0.04)
   CameraFocus.y = lerp(CameraFocus.y,player1.pos.y-Display().y/2,0.012)
   ScrollPosition(CameraFocus.x,CameraFocus.y)
+
   --GENERAL UPDATE CODE
   player1:printPos()
 end
