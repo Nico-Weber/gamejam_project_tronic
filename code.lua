@@ -49,7 +49,8 @@ Pawn = {} --Pawn class defined
 function Pawn:new(name,x,y) --creating an instance of class Pawn
     self.name = name
     self.pos = NewPoint(x,y)
-    self.speed = 10
+    self.speed = 2
+    self.jumpSpeed = 4
     self.flagID = -1
     self.collisionUp = NewPoint(x,y)
     self.collisionLeft = NewPoint(x,y)
@@ -80,7 +81,6 @@ end
 function Init()
   BackgroundColor(13)
   player1 = Pawn:new("Player_1",50,50)
-  player1.speed = 2
   jumpBegin = os.time()
   fallspeedLimitation = os.time()-jumpBegin
 end
@@ -96,10 +96,8 @@ function Update(timeDelta)
   if(Button(Buttons.Left, InputState.Down, 0)) then
     player1.pos.x -= player1.speed
   end
-  if(Button(Buttons.Up, InputState.Down, 0)) then
-    player1.pos.y -= player1.speed
-  end
   if(Button(Buttons.A, InputState.Down, 0)) then
+    player1.pos.y -= player1.jumpSpeed
   end
   --GRAVITY
   if(os.time()-jumpBegin<= 2) then
