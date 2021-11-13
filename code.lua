@@ -42,6 +42,8 @@ local TEXT_COLOR = 0
 local GRAVITY = 9.81
 --GLOBAL VARIABLES
 local CameraFocus = NewPoint(x,y)
+local AnimationCounter = 1
+local timer = os.time()
 
 --CLASSES
 Pawn = {} --Pawn class defined
@@ -50,23 +52,31 @@ function Pawn:new(name,x,y) --creating an instance of class Pawn
     self.name = name
     self.pos = NewPoint(x,y)
     --watch out for unexpected behaviour when using floats with speed (usually integers do the job)
-    self.speed = 2
+    self.speed = 1
     self.jumpSpeed = 2
+    self.experimentalSpeed = 0
     self.flagID = -1
-    self.collisionUp = NewPoint(x,y)
-    self.collisionLeft = NewPoint(x,y)
-    self.collisionRight = NewPoint(x,y)
-    self.collisionDown = NewPoint(x,y)
+    self.animationState = 1 --idle = 1 | walking = 2 | jumping = 3 | falling = 4
+    self.animationFrames = {}
+
  return self
 end
 
 function Pawn:printPos() -- print position (x|y) of pawn
   DrawText(self.name .. ":" .. tostring(self.pos),1*8,1*8,DrawMode.Sprite,"large",TEXT_COLOR)
+  DrawText("AnimationIntervals:" .. math.ceil(timer*100),1*8,2*8,DrawMode.Sprite,"large",TEXT_COLOR)
 end
-
 
 function lerp(pos1, pos2, perc)
   return (1-perc)*pos1 + perc*pos2
+end
+
+
+function AnimIntervals(seconds)
+  if os.time() > timer + seconds then
+    timer = os.time()
+    AnimationCounter += 1
+  end
 end
 
 
@@ -83,19 +93,27 @@ function Update(timeDelta)
   --CONTROLS
   if Button(Buttons.Right, InputState.Down, 0) then
     player1.pos.x += player1.speed
-  end
-  if Button(Buttons.Left, InputState.Down, 0) then
+    player1.animationState = 2
+  elseif Button(Buttons.Left, InputState.Down, 0) then
     player1.pos.x -= player1.speed
+    player1.animationState = 2
+  else
+    player1.animationState = 1 --idle
   end
+
   if Button(Buttons.Up, InputState.Down, 0) then
     player1.pos.y -= player1.jumpSpeed
+    player1.animationState = 3
   end
   if Button(Buttons.A, InputState.Down, 0) then
     player1.pos.y -= player1.jumpSpeed
+    player1.animationState = 3
   end
 
+
+
   --GRAVITY
-  if(os.time()-jumpBegin<= 2) then
+  if(os.time()-jumpBegin<= 2) then --limits the acceleration of gravity
     fallspeedLimitation = os.time()-jumpBegin;
   end
   nextMove = player1.pos.y + GRAVITY * fallspeedLimitation --next position to move in (x|y)
@@ -135,6 +153,17 @@ end
 
 function Draw()
   RedrawDisplay()
-  DrawSprites(PLAYER1_SPRITE, player1.pos.x-3, player1.pos.y-15, 1)
 
+  if player1.animationState == 2 then
+    player1.animationFrames = {1,2,3,2}
+    AnimIntervals(0.08) --how fast the frames iterate
+    DrawSprites({player1.animationFrames[(AnimationCounter%4)+1],16 + player1.animationFrames[(AnimationCounter%4)+1]}, player1.pos.x-3, player1.pos.y-15, 1)
+  elseif player1.animationState == 3 then
+    player1.animationFrames = {4,5,6,7}
+    AnimIntervals(0.1) --how fast the frames iterate
+    DrawSprites({player1.animationFrames[(AnimationCounter%4)+1],16 + player1.animationFrames[(AnimationCounter%4)+1]}, player1.pos.x-3, player1.pos.y-15, 1)
+  elseif player1.animationState == 4 then
+  else --activates idle animation for now
+    DrawSprites(PLAYER1_SPRITE, player1.pos.x-3, player1.pos.y-15, 1)
+  end
 end
