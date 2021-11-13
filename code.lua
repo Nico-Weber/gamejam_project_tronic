@@ -27,7 +27,7 @@
     5.2 changing form
     5.2 general refining
   6. adding assets
-    6.1 animation
+    6.1 animation X
     6.2 music
     6.3 sound
   (7. endgame mechanics)
